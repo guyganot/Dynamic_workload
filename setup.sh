@@ -73,14 +73,16 @@ AWS_SECRET_ACCESS_KEY=$(aws configure get aws_secret_access_key)
 AWS_REGION=$(aws configure get region)
 
 # echo "deploying code to production"
-# scp -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=60" main.py ubuntu@$PUBLIC_IP:/home/ubuntu/
+scp -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=60" worker.py load_balancer.py ubuntu@$PUBLIC_IP_1:/home/ubuntu/
+scp -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=60" worker.py load_balancer.py ubuntu@$PUBLIC_IP_2:/home/ubuntu/
 
 
 echo "setup production environment for instance 1"
 ssh -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=10" ubuntu@$PUBLIC_IP_1 <<EOF
     sudo apt update
-    sudo apt install python3-flask -y
-    export FLASK_APP="main.py"
+    sudo apt install python3-pip -y
+    sudo pip install Flask
+    export FLASK_APP="load_balancer.py"
     # run app
     nohup flask run --host 0.0.0.0 &>/dev/null &
     exit
@@ -89,8 +91,9 @@ EOF
 echo "setup production environment for instance 2"
 ssh -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=10" ubuntu@$PUBLIC_IP_2 <<EOF
     sudo apt update
-    sudo apt install python3-flask -y
-    export FLASK_APP="main.py"
+    sudo apt install python3-pip -y
+    sudo pip install Flask
+    export FLASK_APP="load_balancer.py"
     # run app
     nohup flask run --host 0.0.0.0 &>/dev/null &
     exit
