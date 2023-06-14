@@ -2,21 +2,21 @@
 
 set -euo pipefail
 
-aws configure set region eu-west-1
+aws configure set region us-west-2
 
 # Create key pair to connect to instances and save locally
 printf "Creating key pair...\n"
 KEY_NAME="cloud-course-ex-2-$(date +'%N')"
 KEY_PEM="$KEY_NAME.pem"
 printf "Key name: %s\n" "$KEY_NAME"
-aws ec2 create-key-pair --key-name "$KEY_NAME" --region eu-west-1 | jq -r ".KeyMaterial" > "$KEY_PEM"
+aws ec2 create-key-pair --key-name "$KEY_NAME" --region us-west-2 | jq -r ".KeyMaterial" > "$KEY_PEM"
 chmod 400 "$KEY_PEM"
 
 # Setup firewall
 printf "Setting up firewall...\n"
 SEC_GRP="my-sg-$(date +'%N')"
 printf "Security group name: %s\n" "$SEC_GRP"
-aws ec2 create-security-group --group-name "$SEC_GRP" --description "Access my instances"  --region eu-west-1
+aws ec2 create-security-group --group-name "$SEC_GRP" --description "Access my instances"  --region us-west-2
 
 # Figure out my IP
 MY_IP="$(curl ipinfo.io/ip)"
