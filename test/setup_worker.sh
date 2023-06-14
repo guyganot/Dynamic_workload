@@ -6,7 +6,7 @@ aws configure set region us-east-1
 
 # Create key pair to connect to instances and save locally
 printf "Creating key pair...\n"
-KEY_NAME="cloud-course-assignment-2-$(date +'%N')"
+KEY_NAME="cloud-course-ex-2-$(date +'%N')"
 KEY_PEM="$KEY_NAME.pem"
 printf "Key name: %s\n" "$KEY_NAME"
 aws ec2 create-key-pair --key-name "$KEY_NAME" --region us-east-1 | jq -r ".KeyMaterial" > "$KEY_PEM"
@@ -33,7 +33,7 @@ aws ec2 authorize-security-group-ingress --group-name "$SEC_GRP" --port 22 --pro
 aws ec2 authorize-security-group-ingress --group-name "$SEC_GRP" --port 5000 --protocol tcp --cidr 0.0.0.0/0
 
 # Set AMI ID and instance type
-UBUNTU_22_04_AMI="ami-007855ac798b5175e"
+UBUNTU_22_04_AMI="ami-00aa9d3df94c6c354"
 INSTANCE_TYPE="t2.micro"
 
 # Create Ubuntu 22.04 instance
