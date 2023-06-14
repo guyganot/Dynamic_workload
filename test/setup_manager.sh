@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+# Set the desired region code
+REGION="us-west-2"
+
 # Create key pair to connect to instances and save locally
 printf "Creating key pair...\n"
 KEY_NAME="cloud-course-assignment-2-$(date +'%N')"
