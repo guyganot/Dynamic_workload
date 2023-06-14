@@ -31,7 +31,7 @@ aws ec2 authorize-security-group-ingress --group-name "$SEC_GRP" --port 22 --pro
 aws ec2 authorize-security-group-ingress --group-name "$SEC_GRP" --port 5000 --protocol tcp --cidr 0.0.0.0/0
 
 # Set AMI ID and instance type
-UBUNTU_22_04_AMI="ami-007855ac798b5175e"
+UBUNTU_22_04_AMI="ami-00aa9d3df94c6c354"
 INSTANCE_TYPE="t2.micro"
 
 # Define the IAM role name and policy
