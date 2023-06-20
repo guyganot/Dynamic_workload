@@ -194,8 +194,8 @@ aws ec2 describe-iam-instance-profile-associations --filters "Name=instance-id,V
 echo "Created and attached IAM roles '${IAM_ROLE_NAMES[0]}' and '${IAM_ROLE_NAMES[1]}' to the EC2 instances."
 
 
-curl -X POST "http://$PUBLIC_IP_1:5000/initializationVariables?my_ip=$PUBLIC_IP_1&sibling_ip=$PUBLIC_IP_2" &
-curl -X POST "http://$PUBLIC_IP_2:5000/initializationVariables?my_ip=$PUBLIC_IP_2&sibling_ip=$PUBLIC_IP_1" &
+curl -X POST "http://$PUBLIC_IP_1:5000/init_variables?my_ip=$PUBLIC_IP_1&sibling_ip=$PUBLIC_IP_2" &
+curl -X POST "http://$PUBLIC_IP_2:5000/init_variables?my_ip=$PUBLIC_IP_2&sibling_ip=$PUBLIC_IP_1" &
 
 
 echo "---------------------------------------------------------------------------"
