@@ -226,7 +226,7 @@ def create_worker():
     os.remove(key_file_path)
     
     # Initialize worker variables
-    requests.put(f'http://{public_ip}:5000/start?parent_ip={Manager.my_ip}&machine2_ip={Manager.sibling_ip}&worker_id={instance_id}')
+    requests.put(f'http://{public_ip}:5000/start?parentIP={Manager.my_ip}&machineIP={Manager.sibling_ip}&workerID={instance_id}')
     
     return f'(public_ip: {public_ip})'
 
