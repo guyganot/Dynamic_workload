@@ -20,11 +20,11 @@ MY_IP=$(curl ipinfo.io/ip)
 echo "My IP: $MY_IP"
 
 
-echo "Setup rule allowing SSH access to $MY_IP only"
-aws ec2 authorize-security-group-ingress --group-name "$SEC_GRP" --port 22 --protocol tcp --source-group "$SEC_GRP" --cidr "$MY_IP"/32
+echo "Setup rule allowing SSH access to all IPs"
+aws ec2 authorize-security-group-ingress --group-name "$SEC_GRP" --port 22 --protocol tcp --cidr 0.0.0.0/0
 
 echo "Setup rule allowing HTTP (port 5000) access to all IPs"
-aws ec2 authorize-security-group-ingress --group-name "$SEC_GRP" --port 5000 --protocol tcp --source-group "$SEC_GRP" --cidr 0.0.0.0/0
+aws ec2 authorize-security-group-ingress --group-name "$SEC_GRP" --port 5000 --protocol tcp --cidr 0.0.0.0/0
 
 UBUNTU_20_04_AMI="ami-00aa9d3df94c6c354"
 
@@ -44,7 +44,7 @@ PUBLIC_IP_1=$(aws ec2 describe-instances  --instance-ids $INSTANCE_ID_1 |
     jq -r '.Reservations[0].Instances[0].PublicIpAddress'
 )
 
-PRIVATE_IP_1=$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID_1" --query 'Reservations[0].Instances[0].PrivateIpAddress' --output text)
+# PRIVATE_IP_1=$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID_1" --query 'Reservations[0].Instances[0].PrivateIpAddress' --output text)
 
 echo "New instance 1 $INSTANCE_ID_1 @ $PUBLIC_IP_1"
 
@@ -64,24 +64,47 @@ PUBLIC_IP_2=$(aws ec2 describe-instances  --instance-ids $INSTANCE_ID_2 |
     jq -r '.Reservations[0].Instances[0].PublicIpAddress'
 )
 
-PRIVATE_IP_2=$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID_2" --query 'Reservations[0].Instances[0].PrivateIpAddress' --output text)
+# PRIVATE_IP_2=$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID_2" --query 'Reservations[0].Instances[0].PrivateIpAddress' --output text)
 
 echo "New instance 2 $INSTANCE_ID_2 @ $PUBLIC_IP_2"
 
-AWS_ACCESS_KEY_ID=$(aws configure get aws_access_key_id)
-AWS_SECRET_ACCESS_KEY=$(aws configure get aws_secret_access_key)
-AWS_REGION=$(aws configure get region)
+# AWS_ACCESS_KEY_ID=$(aws configure get aws_access_key_id)
+# AWS_SECRET_ACCESS_KEY=$(aws configure get aws_secret_access_key)
+# AWS_REGION=$(aws configure get region)
 
 # echo "deploying code to production"
-scp -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=60" worker.py load_balancer.py ubuntu@$PUBLIC_IP_1:/home/ubuntu/
-scp -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=60" worker.py load_balancer.py ubuntu@$PUBLIC_IP_2:/home/ubuntu/
+scp -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=60" worker.py ubuntu@$PUBLIC_IP_1:/home/ubuntu/
+scp -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=60" load_balancer.py ubuntu@$PUBLIC_IP_1:/home/ubuntu/
+
+scp -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=60" worker.py ubuntu@$PUBLIC_IP_2:/home/ubuntu/
+scp -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=60" load_balancer.py ubuntu@$PUBLIC_IP_2:/home/ubuntu/
+
+echo "setup production environment for instance 1"
+ssh -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=10" ubuntu@$PUBLIC_IP_1 <<EOF
+    echo "export myIP=$PUBLIC_IP_1" >> ~/.bashrc
+    echo "export siblingIP=$PUBLIC_IP_2" >> ~/.bashrc
+    source ~/.bashrc
+    exit
+EOF
+
+echo "setup production environment for instance 2"
+ssh -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=10" ubuntu@$PUBLIC_IP_2 <<EOF
+    echo "export myIP=$PUBLIC_IP_2" >> ~/.bashrc
+    echo "export siblingIP=$PUBLIC_IP_1" >> ~/.bashrc
+    source ~/.bashrc
+    exit
+EOF
 
 
 echo "setup production environment for instance 1"
 ssh -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=10" ubuntu@$PUBLIC_IP_1 <<EOF
     sudo apt update
+    sudo apt install python
     sudo apt install python3-pip -y
+    sudo apt install python3-paramiko -y
     sudo pip install Flask
+    sudo pip install boto3
+    sudo pip install requests
     export FLASK_APP="load_balancer.py"
     # run app
     nohup flask run --host 0.0.0.0 &>/dev/null &
@@ -91,8 +114,12 @@ EOF
 echo "setup production environment for instance 2"
 ssh -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=10" ubuntu@$PUBLIC_IP_2 <<EOF
     sudo apt update
+    sudo apt install python
     sudo apt install python3-pip -y
+    sudo apt install python3-paramiko -y
     sudo pip install Flask
+    sudo pip install boto3
+    sudo pip install requests
     export FLASK_APP="load_balancer.py"
     # run app
     nohup flask run --host 0.0.0.0 &>/dev/null &
