@@ -7,50 +7,63 @@ app = Flask(__name__)
 
 
 class Worker:
-    instance_ip = None
+    instance_id = None
     parent_ip = None
+    nodesList = []
+
+    @app.route('/start', methods=['PUT'])
+    def start():
+        parent = request.args.get('parentIP')
+        machine = request.args.get('machineIP')
+        Worker.instanceId = request.args.get('workerID')
+        Worker.nodesList.append(parent)
+        Worker.parent_ip = parent
+        if machine is not None:
+            Worker.nodesList.append(machine)
+        lastWorkTime = datetime.now()
+        while (datetime.now() - lastWorkTime).total_seconds() < 60:
+            for n in Worker.nodesList:
+                task = Worker.giveMeWork(n)
+                if task['status'] != 0:
+                    result = Worker.work(task['buffer'].encode('utf-8'), int(task['iterations']))
+                    Worker.workDone(n, {'response': result.decode('latin-1')})
+                    lastWorkTime = datetime.now()
+                    continue
+            time.sleep(1)
+        Worker.terminate()
 
 
 
 
+    @staticmethod
+    def work(buffer, iterations):
+        import hashlib
+        output = hashlib.sha512(buffer).digest()
+        for i in range(iterations - 1):
+            output = hashlib.sha512(output).digest()
+        return output
+
+    @staticmethod
+    def giveMeWork(ip):
+        url = f"http://{ip}:5000/giveMeWork"
+        try:
+            response = requests.get(url)
+            if response.status_code == 200:
+                return response.json()      
+        except Exception as e:
+            print(f"Error: {e}")
+        return {"status": 0}
 
 
+    @staticmethod
+    def workDone(ip, output):
+        url = f"http://{ip}:5000/workDone"
+        requests.put(url, json=output)
 
-
-
-sqs = boto3.resource('sqs')
-task_queue = sqs.get_queue_by_name(QueueName='task_queue')
-result_queue = sqs.get_queue_by_name(QueueName='result_queue')
-
-
-def perform_work(buffer, iterations):
-    output = hashlib.sha512(buffer).digest()
-    for _ in range(iterations - 1):
-        output = hashlib.sha512(output).digest()
-    return output
-
-
-def process_tasks():
-    while True:
-        messages = task_queue.receive_messages(MaxNumberOfMessages=10)
-        if not messages:
-            continue
-
-        for message in messages:
-            task = json.loads(message.body)
-            buffer = task['buffer']
-            iterations = task['iterations']
-
-            result = perform_work(buffer, iterations)
-
-            result_message = {
-                'work_id': message.message_id,
-                'result': result
-            }
-            result_queue.send_message(MessageBody=json.dumps(result_message))
-
-            message.delete()
-
+    @staticmethod
+    def terminate():
+        url = f"http://{Worker.parent_ip}:5000/terminate"
+        requests.post(url, json={'id': Worker.instance_id})
 
 if __name__ == '__main__':
-    process_tasks()
+    app.run(host='0.0.0.0', port=5000)
