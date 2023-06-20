@@ -1,7 +1,22 @@
-import boto3
-import hashlib
-import json
-import os
+from flask import Flask, request
+from datetime import datetime
+import requests
+import time
+
+app = Flask(__name__)
+
+
+class Worker:
+    instance_ip = None
+    parent_ip = None
+
+
+
+
+
+
+
+
 
 sqs = boto3.resource('sqs')
 task_queue = sqs.get_queue_by_name(QueueName='task_queue')
