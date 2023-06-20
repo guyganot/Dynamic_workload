@@ -35,7 +35,7 @@ class Manager:
     def enqueue():
        iterations = request.args.get('iterations')
        buffer = request.get_data(as_text=True)
-       Manager.tasks.append((buffer, iterations, datetime.now()))
+       Manager.task_queue.append((buffer, iterations, datetime.now()))
        return 'POST request processed successfully', 200
 
 
@@ -48,7 +48,7 @@ class Manager:
     
     @staticmethod
     def check_and_create_worker():
-        if len(Manager.task_queue) > 0 and (datetime.now() - Manager.tasks[0][2]).total_seconds() > Manager.limit:
+        if len(Manager.task_queue) > 0 and (datetime.now() - Manager.task_queue[0][2]).total_seconds() > Manager.limit:
             if Manager.num_of_workers < Manager.max_num_of_workers and not Manager.creating_worker:
                 Manager.creating_worker = True
                 Manager.num_of_workers += 1
