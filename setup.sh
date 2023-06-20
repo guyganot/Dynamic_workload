@@ -196,3 +196,22 @@ echo "Created and attached IAM roles '${IAM_ROLE_NAMES[0]}' and '${IAM_ROLE_NAME
 
 curl -X POST "http://$PUBLIC_IP_1:5000/init_variables?my_ip=$PUBLIC_IP_1&sibling_ip=$PUBLIC_IP_2" &
 curl -X POST "http://$PUBLIC_IP_2:5000/init_variables?my_ip=$PUBLIC_IP_2&sibling_ip=$PUBLIC_IP_1" &
+
+
+echo "---------------------------------------------------------------------------"
+echo "testing endpoints"
+echo -e "enqueue work to the first instance by the command: curl -X PUT --data-binary \"@testing.bin\" \"http://$PUBLIC_IP_1:5000/enqueue?iterations=1\""
+echo ""
+curl -X PUT --data-binary "@testing.bin" "http://$PUBLIC_IP_1:5000/enqueue?iterations=1"
+echo ""
+echo -e "enqueue work to the first instance by the command: curl -X PUT --data-binary \"@testing.bin\" \"http://$PUBLIC_IP_OF_MY_INSTANCE_2:5000/enqueue?iterations=2\""
+echo ""
+curl -X PUT --data-binary "@testing.bin" "http://$PUBLIC_IP_2:5000/enqueue?iterations=2"
+echo ""
+echo "Waiting for 10 minutes...until the instances will be deployed.."
+sleep 600
+echo ""
+echo -e "pull completed the 2 tasks from the first instance by the command: curl -X POST \"http://$PUBLIC_IP_OF_MY_INSTANCE_1:5000/pullCompleted?top=2\""
+echo ""
+curl -X POST "http://$PUBLIC_IP_1:5000/pullCompleted?top=2"
+echo ""
