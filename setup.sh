@@ -125,3 +125,93 @@ ssh -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=10" ubuntu@
     nohup flask run --host 0.0.0.0 &>/dev/null &
     exit
 EOF
+
+
+#!/bin/bash
+
+# Generate unique names for IAM roles
+timestamp=$(date +'%N')
+IAM_ROLE_NAMES=("name-1-cloud-course-$timestamp" "name-2-cloud-course-$timestamp")
+
+# IAM policy JSON
+IAM_POLICY='{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:RunInstances",
+        "ec2:TerminateInstances",
+        "ec2:CreateKeyPair",
+        "ec2:CreateSecurityGroup",
+        "ec2:AuthorizeSecurityGroupIngress",
+        "ec2:DescribeInstances",
+        "ec2:DescribeInstanceStatus",
+        "ec2:GetWaiter"
+      ],
+      "Resource": "*"
+    }
+  ]
+}'
+
+# Create IAM roles, policies, and instance profiles
+IAM_ROLE_ARNS=()
+IAM_POLICY_ARNS=()
+for role_name in "${IAM_ROLE_NAMES[@]}"; do
+  # Create IAM role
+  IAM_ROLE_ARN=$(aws iam create-role --role-name "$role_name" --assume-role-policy-document '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"ec2.amazonaws.com"},"Action":"sts:AssumeRole"}]}' --query 'Role.Arn' --output text)
+  IAM_ROLE_ARNS+=("$IAM_ROLE_ARN")
+
+  # Create IAM policy
+  IAM_POLICY_ARN=$(aws iam create-policy --policy-name "${role_name}-policy" --policy-document "$IAM_POLICY" --query 'Policy.Arn' --output text)
+  IAM_POLICY_ARNS+=("$IAM_POLICY_ARN")
+
+  # Attach IAM policy to IAM role
+  aws iam attach-role-policy --role-name "$role_name" --policy-arn "$IAM_POLICY_ARN"
+
+  # Create IAM instance profile
+  aws iam create-instance-profile --instance-profile-name "$role_name"
+
+  # Add IAM role to instance profile
+  aws iam add-role-to-instance-profile --instance-profile-name "$role_name" --role-name "$role_name"
+done
+
+# Wait until instance profiles are available
+for role_name in "${IAM_ROLE_NAMES[@]}"; do
+  while ! aws iam get-instance-profile --instance-profile-name "$role_name" >/dev/null 2>&1; do
+    sleep 1
+  done
+done
+
+# Associate IAM instance profiles with EC2 instances
+aws ec2 associate-iam-instance-profile --instance-id "$INSTANCE_ID_1" --iam-instance-profile Name="${IAM_ROLE_NAMES[0]}"
+aws ec2 associate-iam-instance-profile --instance-id "$INSTANCE_ID_2" --iam-instance-profile Name="${IAM_ROLE_NAMES[1]}"
+
+# Verify the IAM role and instance profile associations
+aws ec2 describe-iam-instance-profile-associations --filters "Name=instance-id,Values=$INSTANCE_ID_1"
+aws ec2 describe-iam-instance-profile-associations --filters "Name=instance-id,Values=$INSTANCE_ID_2"
+
+echo "Created and attached IAM roles '${IAM_ROLE_NAMES[0]}' and '${IAM_ROLE_NAMES[1]}' to the EC2 instances."
+
+
+curl -X POST "http://$PUBLIC_IP_1:5000/initializationVariables?myIP=$PUBLIC_IP_1&siblingIP=$PUBLIC_IP_2" &
+curl -X POST "http://$PUBLIC_IP_2:5000/initializationVariables?myIP=$PUBLIC_IP_2&siblingIP=$PUBLIC_IP_1" &
+
+
+echo "---------------------------------------------------------------------------"
+echo "testing endpoints"
+echo -e "enqueue work to the first instance by the command: curl -X PUT --data-binary \"@testing.bin\" \"http://$PUBLIC_IP_1:5000/enqueue?iterations=1\""
+echo ""
+curl -X PUT --data-binary "@testing.bin" "http://$PUBLIC_IP_1:5000/enqueue?iterations=1"
+echo ""
+echo -e "enqueue work to the first instance by the command: curl -X PUT --data-binary \"@testing.bin\" \"http://$PUBLIC_IP_2:5000/enqueue?iterations=2\""
+echo ""
+curl -X PUT --data-binary "@testing.bin" "http://$PUBLIC_IP_2:5000/enqueue?iterations=2"
+echo ""
+echo "Waiting for 10 minutes...until the instances will be deployed.."
+sleep 600
+echo ""
+echo -e "pull completed the 2 tasks from the first instance by the command: curl -X POST \"http://$PUBLIC_IP_1:5000/pullCompleted?top=2\""
+echo ""
+curl -X POST "http://$PUBLIC_IP_1:5000/pullCompleted?top=2"
+echo ""
