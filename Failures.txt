@@ -1,74 +1,45 @@
-
 # Failure Modes
 
 A document detailing failure modes and how to deal with them if this was a real-world project.
 
-## 1. Infrastructure Failures
 
-### Failure Mode:
-- Unavailability of cloud resources, such as instances, load balancers, or databases.
-- Network connectivity issues.
-- Hardware or software failures.
+## Application Failures
+Application failures can have a significant impact on users, so it is important to be able to detect and resolve them quickly and effectively.
 
-### Mitigation Strategies:
-- Implement automated monitoring systems to detect infrastructure failures and downtime.
-- Utilize load balancing and redundancy techniques to distribute traffic and ensure high availability.
-- Regularly back up data and create disaster recovery plans to restore functionality in case of failures.
-- Implement auto-scaling mechanisms to handle increased traffic or resource demands.
-- Use a cloud provider with a reliable infrastructure and well-established SLAs (Service Level Agreements).
+Mitigation Strategies:
+To ensure reliability, detect and recover from application failures quickly. Use monitoring, alerting, error handling, logging, and reporting to do this.
 
-## 2. Software and Application Failures
 
-### Failure Mode:
-- Bugs, errors, or crashes in the software code.
-- Incompatibilities or conflicts between software components.
-- Insufficient error handling and exception management.
+## Network or Srever Issues
+Servers may become inaccessible due to connectivity issues.
 
-### Mitigation Strategies:
-- Employ thorough testing practices, including unit testing, integration testing, and regression testing, to identify and fix software defects.
-- Implement error handling mechanisms and proper exception management to gracefully handle failures and provide meaningful error messages to users.
-- Use version control systems and continuous integration/continuous deployment (CI/CD) pipelines to track code changes, automate builds, and deploy stable versions of the software.
-- Implement logging and monitoring mechanisms to capture and analyze application logs for troubleshooting and debugging purposes.
-- Employ a robust incident management process to address and resolve software failures promptly.
+Mitigation Strategies:
+To ensure availability, detect and recover unreachable instances. Use primary instances, fault detection and recovery, load balancers, or service discovery to route traffic to healthy instances.
 
-## 3. Data Loss or Corruption
 
-### Failure Mode:
-- Accidental deletion or corruption of critical data.
-- Data breaches or unauthorized access to sensitive information.
-- Insufficient backup and recovery mechanisms.
+## Security Breaches
+The system's security is not configured to restrict access on default ports, which could allow unauthorized users to access the system.
 
-### Mitigation Strategies:
-- Implement regular data backups and establish backup storage systems to prevent data loss.
-- Employ data encryption techniques to protect sensitive information at rest and in transit.
-- Implement access controls and user authentication mechanisms to ensure data security and prevent unauthorized access.
-- Regularly test data backup and recovery processes to verify their effectiveness.
-- Comply with relevant data protection regulations and industry best practices.
+Mitigation Strategies:
+To secure the system, limit access by configuring security groups and using strong authentication and access control measures. Additionally, regularly update and patch system components to address known security vulnerabilities.
 
-## 4. External Service Dependencies
 
-### Failure Mode:
-- Outages or disruptions in external services or APIs (Application Programming Interfaces) that the project relies on.
-- Performance issues or increased response times from third-party services.
+## EC2 Instance Failure:
+One of the EC2 instances hosting the system fails.
 
-### Mitigation Strategies:
-- Identify critical external service dependencies and monitor their status and performance.
-- Implement mechanisms to handle service outages gracefully, such as caching data, displaying informative error messages to users, or failing over to alternative services.
-- Use retry mechanisms and timeouts when making requests to external services to handle transient failures and prevent cascading failures in the project.
-- Consider implementing service level agreements (SLAs) with third-party service providers to ensure timely resolution of issues and minimize downtime.
+Mitigation Strategies: 
+To distribute traffic evenly and ensure high availability, a load balancer can be implemented in front of EC2 instances. The load balancer will monitor the health of the instances and route traffic to healthy instances. If an instance fails, the load balancer will stop sending requests to the failed instance and redistribute the workload among the remaining instances.
 
-## 5. Human Errors and Operational Mistakes
 
-### Failure Mode:
-- Configuration errors in the infrastructure or application settings.
-- Mismanagement of deployment processes or code releases.
-- Insufficient training or lack of awareness among team members.
+## Race Conditions
+When multiple processes or threads access the same data at the same time, a race condition can occur. This can lead to data inconsistencies or incorrect results.
 
-### Mitigation Strategies:
-- Implement infrastructure as code (IaC) practices to automate and standardize the deployment and configuration of the project's infrastructure.
-- Use version control systems and deployment pipelines to manage code releases and ensure consistent and controlled deployments.
-- Conduct regular training sessions and knowledge sharing activities to enhance team members' skills and awareness of best practices.
-- Implement role-based access controls (RBAC) to restrict access to critical systems and
+Mitigation Strategies:
+Race conditions can occur when multiple threads or processes are accessing the same data at the same time. To prevent this, it is important to identify critical sections of code where race conditions can occur and use locking mechanisms to ensure that only one thread or process can access the shared data at a time. This will help to prevent incorrect results, such as data corruption or incorrect calculations.
 
- minimize the risk of unauthorized configuration changes.
-- Conduct thorough code reviews and implement quality assurance processes to catch potential errors before deployment.
+
+## High System Load
+The system is experiencing performance degradation due to high traffic and resource usage, which is violating latency SLAs.
+
+Mitigation Strategies:
+Load balancing can be implemented to distribute requests evenly among EndpointServer instances, ensuring that SLAs are met. Auto-scaling can be used to dynamically scale the number of instances based on system load, and workload partitioning can be used to further distribute the load across multiple instances.
