@@ -2,7 +2,7 @@
 
 ## Building a queue & work management system for parallel processing
 
-It consists of two main files: load_balancer.py and worker.py. The load_balancer.py file represents the manager responsible for distributing tasks to worker nodes, while the worker.py file represents the worker nodes that perform the actual computation.
+The project consists of two main files: load_balancer.py and worker.py. The load_balancer.py file represents the manager responsible for distributing tasks to worker nodes, while the worker.py file represents the worker nodes that perform the actual computation.
 
 The load balancer code (load_balancer.py) sets up a Flask application and defines several routes for handling different tasks and requests. It includes functionalities such as initializing variables, enqueuing tasks, creating workers, checking and creating workers based on certain conditions, pulling completed tasks, getting sibling tasks, giving work to workers, marking work as done, and terminating workers.
 
