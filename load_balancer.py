@@ -83,7 +83,7 @@ class Manager:
                 sudo apt update
                 sudo apt install python3-pip -y
                 sudo pip3 install Flask boto3 requests
-                curl -O https://raw.githubusercontent.com/example/worker.py
+                curl -O https://raw.githubusercontent.com/guyganot/Dynamic_workload/main/worker.py
                 export FLASK_APP=worker.py
                 nohup flask run --host 0.0.0.0 &>/dev/null &
                 exit
