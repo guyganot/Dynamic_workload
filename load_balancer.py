@@ -176,7 +176,7 @@ class Manager:
             return "True"
         return "False"
     
-   def get_completed_tasks(top):
+    def get_completed_tasks(top):
         ListOfCompletedTask = []
     
         if top <= len(Manager.completed_tasks):
@@ -221,12 +221,12 @@ class Manager:
         return completed_tasks
         
     def get_work():
-    if len(Manager.task_queue) > 0:
-        task = Manager.task_queue[0]
-        Manager.task_queue = Manager.task_queue[1:]
-        return {"buffer": task[0], "iterations": task[1], "status": 1}
-    else:
-        return {"status": 0}
+        if len(Manager.task_queue) > 0:
+            task = Manager.task_queue[0]
+            Manager.task_queue = Manager.task_queue[1:]
+            return {"buffer": task[0], "iterations": task[1], "status": 1}
+        else:
+            return {"status": 0}
 
     @app.route('/giveMeWork', methods=['GET'])
     def giveMeWork():
@@ -252,5 +252,5 @@ class Manager:
         termination_result = terminate_worker(worker_id)
         return termination_result
     
-    if __name__ == '__main__':
-        app.run(host='0.0.0.0', port=5000)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
