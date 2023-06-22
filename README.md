@@ -1,3 +1,8 @@
+# Cloud Computing - Exercise 2
+
+## Students: Guy Ganot - 207044363 , Yotam Galinka - 318963931
+
+
 # Dynamic_workload
 
 ## Building a queue & work management system for parallel processing
