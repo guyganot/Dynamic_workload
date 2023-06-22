@@ -6,40 +6,40 @@ A document detailing failure modes and how to deal with them if this was a real-
 ## Application Failures
 Application failures can have a significant impact on users, so it is important to be able to detect and resolve them quickly and effectively.
 
-Mitigation Strategies:
+How to handle:
 To ensure reliability, detect and recover from application failures quickly. Use monitoring, alerting, error handling, logging, and reporting to do this.
 
 
 ## Network or Srever Issues
 Servers may become inaccessible due to connectivity issues.
 
-Mitigation Strategies:
+How to handle:
 To ensure availability, detect and recover unreachable instances. Use primary instances, fault detection and recovery, load balancers, or service discovery to route traffic to healthy instances.
 
 
 ## Security Breaches
 The system's security is not configured to restrict access on default ports, which could allow unauthorized users to access the system.
 
-Mitigation Strategies:
+How to handle:
 To secure the system, limit access by configuring security groups and using strong authentication and access control measures. Additionally, regularly update and patch system components to address known security vulnerabilities.
 
 
 ## EC2 Instance Failure:
 One of the EC2 instances hosting the system fails.
 
-Mitigation Strategies: 
+How to handle:
 To distribute traffic evenly and ensure high availability, a load balancer can be implemented in front of EC2 instances. The load balancer will monitor the health of the instances and route traffic to healthy instances. If an instance fails, the load balancer will stop sending requests to the failed instance and redistribute the workload among the remaining instances.
 
 
 ## Race Conditions
 When multiple processes or threads access the same data at the same time, a race condition can occur. This can lead to data inconsistencies or incorrect results.
 
-Mitigation Strategies:
+How to handle:
 Race conditions can occur when multiple threads or processes are accessing the same data at the same time. To prevent this, it is important to identify critical sections of code where race conditions can occur and use locking mechanisms to ensure that only one thread or process can access the shared data at a time. This will help to prevent incorrect results, such as data corruption or incorrect calculations.
 
 
 ## High System Load
 The system is experiencing performance degradation due to high traffic and resource usage, which is violating latency SLAs.
 
-Mitigation Strategies:
+How to handle:
 Load balancing can be implemented to distribute requests evenly among EndpointServer instances, ensuring that SLAs are met. Auto-scaling can be used to dynamically scale the number of instances based on system load, and workload partitioning can be used to further distribute the load across multiple instances.
