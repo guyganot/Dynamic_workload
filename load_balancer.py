@@ -23,23 +23,27 @@ class Manager:
 
     @staticmethod
     def create_worker():
+        worker_info = create_worker_route()
+        return worker_info
+    
+    def create_worker_route():
         # Generate a random UUID
         worker_id = str(uuid.uuid4())
     
         # Set up EC2 client
         region = 'eu-west-1'
         ec2_client = boto3.client('ec2', region_name=region)
-        
+    
         # Create a key pair
         key_name = f'key-{worker_id}'
         response = ec2_client.create_key_pair(KeyName=key_name)
         key_material = response['KeyMaterial']
-        
+    
         # Save key material to a file
         key_file_path = f'{key_name}.pem'
         with open(key_file_path, 'w') as key_file:
             key_file.write(key_material)
-        
+    
         # Set up security group
         sg_name = f'sg-{worker_id}'
         response = ec2_client.create_security_group(
@@ -47,7 +51,7 @@ class Manager:
             GroupName=sg_name
         )
         security_group_id = response['GroupId']
-        
+    
         # Configure security group rules
         ec2_client.authorize_security_group_ingress(
             GroupId=security_group_id,
@@ -66,7 +70,7 @@ class Manager:
                 }
             ]
         )
-        
+    
         # Launch EC2 instance
         response = ec2_client.run_instances(
             ImageId='ami-00aa9d3df94c6c354',
@@ -75,46 +79,30 @@ class Manager:
             SecurityGroupIds=[security_group_id],
             MinCount=1,
             MaxCount=1,
-            UserData=f'''#!/bin/bash
+            UserData='''#!/bin/bash
                 sudo apt update
-                sudo apt install python
                 sudo apt install python3-pip -y
-                sudo apt install python3-paramiko -y
-                sudo pip install Flask
-                sudo pip install boto3
-                sudo pip install requests
+                sudo pip3 install Flask boto3 requests
+                curl -O https://raw.githubusercontent.com/example/worker.py
+                export FLASK_APP=worker.py
+                nohup flask run --host 0.0.0.0 &>/dev/null &
+                exit
                 ''',
         )
         instance_id = response['Instances'][0]['InstanceId']
-        
+    
         # Wait for the instance to be ready
         waiter = ec2_client.get_waiter('instance_status_ok')
         waiter.wait(InstanceIds=[instance_id])
         print(f'Instance {instance_id} is running.')
-        
+    
         # Retrieve public IP address
         response = ec2_client.describe_instances(InstanceIds=[instance_id])
         public_ip = response['Reservations'][0]['Instances'][0]['PublicIpAddress']
-        
-        # Transfer worker.py script to the instance using paramiko
-        ssh_client = paramiko.SSHClient()
-        ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh_client.connect(hostname=public_ip, username='ubuntu', key_filename=key_file_path)
-        sftp_client = ssh_client.open_sftp()
-        sftp_client.put('worker.py', '/home/ubuntu/worker.py')
-        sftp_client.close()
-        
-        # Execute worker.py script on the instance using SSH
-        ssh_client.exec_command(
-            'export FLASK_APP=/home/ubuntu/worker.py && nohup flask run --host 0.0.0.0 &>/dev/null &')
-        time.sleep(30)
-        
+    
         # Clean up key pair file
         os.remove(key_file_path)
-        
-        # Initialize worker variables
-        requests.put(f'http://{public_ip}:5000/start?parentIP={Manager.my_ip}&machineIP={Manager.sibling_ip}&workerID={instance_id}')
-        
+    
         return f'(public_ip: {public_ip})'
 
     
