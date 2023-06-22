@@ -53,13 +53,21 @@ class Worker:
     @staticmethod
     def giveMeWork(ip):
         url = f"http://{ip}:5000/giveMeWork"
+        response = None
+    
         try:
-            response = requests.get(url)
-            if response.status_code == 200:
-                return response.json()
-        except Exception as e:
+            with requests.get(url) as response:
+                if response.status_code == 200:
+                    return response.json()
+                else:
+                    response.raise_for_status()
+        except requests.exceptions.RequestException as e:
             print(f"Error: {e}")
-        return {"status": 0}
+        finally:
+            if response is not None:
+                response.close()
+    
+        return {"status": 0}
 
     @staticmethod
     def workDone(ip, output):
